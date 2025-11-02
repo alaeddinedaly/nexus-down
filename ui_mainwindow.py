@@ -1,7 +1,9 @@
+# ui_mainwindow.py
+
 """
-NexusDown - Modern Main Window UI
-==================================
-Contains the redesigned main window UI with modern dark theme.
+NexusDown - Simplified Main Window UI
+=====================================
+Contains the simplified main window UI with clean design.
 """
 
 import os
@@ -18,12 +20,12 @@ import requests
 from database import DatabaseManager
 from download_manager import DownloadManager
 from ui_dialogs import AddDownloadDialog, SettingsDialog
-from utils import format_bytes, format_speed, get_filename_from_url
+from utils import format_bytes, format_speed, get_filename_from_url, calculate_eta
 
 
 class MainWindow(QMainWindow):
     """
-    Main application window with modern dark theme.
+    Main application window with simplified clean design.
     """
     
     def __init__(self):
@@ -51,11 +53,11 @@ class MainWindow(QMainWindow):
     
     def setup_ui(self):
         """
-        Setup the user interface with modern styling.
+        Setup the user interface with simplified styling.
         """
-        self.setWindowTitle("NexusDown - Modern Download Manager")
-        self.setGeometry(100, 100, 1300, 750)
-        self.setMinimumSize(1000, 600)
+        self.setWindowTitle("NexusDown - Download Manager")
+        self.setGeometry(100, 100, 1200, 700)
+        self.setMinimumSize(900, 550)
         
         # Central widget
         central_widget = QWidget()
@@ -79,110 +81,95 @@ class MainWindow(QMainWindow):
         # Create status bar
         self.create_status_bar()
         
-        # Apply modern dark theme
-        self.apply_modern_theme()
+        # Apply simplified theme
+        self.apply_simplified_theme()
     
     def create_header(self, layout):
         """
-        Create modern header with app name and gradient.
+        Create simplified header.
         """
         header = QWidget()
         header.setObjectName("header")
-        header.setFixedHeight(70)
+        header.setFixedHeight(60)
         
         header_layout = QHBoxLayout(header)
-        header_layout.setContentsMargins(25, 15, 25, 15)
+        header_layout.setContentsMargins(20, 10, 20, 10)
         
         # App title
-        title_label = QLabel("NEXUSDOWN")
+        title_label = QLabel("NexusDown")
         title_label.setObjectName("appTitle")
-        title_font = QFont("Segoe UI", 24, QFont.Bold)
+        title_font = QFont("Segoe UI", 20, QFont.Bold)
         title_label.setFont(title_font)
         
-        # Subtitle
-        subtitle_label = QLabel("Modern Download Manager")
-        subtitle_label.setObjectName("appSubtitle")
-        subtitle_font = QFont("Segoe UI", 10)
-        subtitle_label.setFont(subtitle_font)
-        
-        # Title container
-        title_container = QVBoxLayout()
-        title_container.setSpacing(2)
-        title_container.addWidget(title_label)
-        title_container.addWidget(subtitle_label)
-        
-        header_layout.addLayout(title_container)
+        header_layout.addWidget(title_label)
         header_layout.addStretch()
         
         layout.addWidget(header)
     
     def create_toolbar(self):
         """
-        Create modern toolbar with styled action buttons.
+        Create simplified toolbar.
         """
         toolbar = QToolBar()
         toolbar.setObjectName("modernToolbar")
         toolbar.setMovable(False)
-        toolbar.setIconSize(QSize(20, 20))
+        toolbar.setIconSize(QSize(18, 18))
         toolbar.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
-        toolbar.setContentsMargins(15, 10, 15, 10)
+        toolbar.setContentsMargins(10, 8, 10, 8)
         self.addToolBar(toolbar)
         
         # Add Download button
-        add_action = QAction("  Add Download", self)
+        add_action = QAction("+ Add Download", self)
         add_action.setObjectName("addButton")
         add_action.triggered.connect(self.show_add_download_dialog)
         toolbar.addAction(add_action)
         
         toolbar.addSeparator()
         
-        # Pause button
-        pause_action = QAction("  Pause", self)
+        # Control buttons
+        pause_action = QAction("Pause", self)
         pause_action.triggered.connect(self.pause_selected)
         toolbar.addAction(pause_action)
         
-        # Resume button
-        resume_action = QAction("  Resume", self)
+        resume_action = QAction("Resume", self)
         resume_action.triggered.connect(self.resume_selected)
         toolbar.addAction(resume_action)
         
-        # Cancel button
-        cancel_action = QAction("  Cancel", self)
+        cancel_action = QAction("Cancel", self)
         cancel_action.triggered.connect(self.cancel_selected)
         toolbar.addAction(cancel_action)
         
         toolbar.addSeparator()
         
-        # Remove button
-        remove_action = QAction("  Remove", self)
+        # Utility buttons
+        remove_action = QAction("Remove", self)
         remove_action.triggered.connect(self.remove_selected)
         toolbar.addAction(remove_action)
         
-        # Open Folder button
-        folder_action = QAction("  Open Folder", self)
+        folder_action = QAction("Open Folder", self)
         folder_action.triggered.connect(self.open_download_folder)
         toolbar.addAction(folder_action)
         
-        # Add stretch to push settings to right
+        # Spacer
         spacer = QWidget()
         spacer.setSizePolicy(spacer.sizePolicy().Expanding, spacer.sizePolicy().Preferred)
         toolbar.addWidget(spacer)
         
         # Settings button
-        settings_action = QAction("  Settings", self)
+        settings_action = QAction("Settings", self)
         settings_action.setObjectName("settingsButton")
         settings_action.triggered.connect(self.show_settings_dialog)
         toolbar.addAction(settings_action)
     
     def create_table(self):
         """
-        Create downloads table with modern styling.
+        Create downloads table with simplified styling.
         """
         self.downloads_table = QTableWidget()
         self.downloads_table.setObjectName("modernTable")
-        self.downloads_table.setColumnCount(7)
+        self.downloads_table.setColumnCount(8)
         self.downloads_table.setHorizontalHeaderLabels([
-            "Filename", "Progress", "Size", "Speed", "Status", "Date", "ID"
+            "Filename", "Progress", "Size", "Speed", "Time Left", "Status", "Date", "ID"
         ])
         
         # Set column widths
@@ -191,19 +178,21 @@ class MainWindow(QMainWindow):
         header.setSectionResizeMode(1, QHeaderView.Fixed)     # Progress
         header.setSectionResizeMode(2, QHeaderView.Fixed)     # Size
         header.setSectionResizeMode(3, QHeaderView.Fixed)     # Speed
-        header.setSectionResizeMode(4, QHeaderView.Fixed)     # Status
-        header.setSectionResizeMode(5, QHeaderView.Fixed)     # Date
-        header.setSectionResizeMode(6, QHeaderView.Fixed)     # ID
+        header.setSectionResizeMode(4, QHeaderView.Fixed)     # Time Left
+        header.setSectionResizeMode(5, QHeaderView.Fixed)     # Status
+        header.setSectionResizeMode(6, QHeaderView.Fixed)     # Date
+        header.setSectionResizeMode(7, QHeaderView.Fixed)     # ID
         
-        self.downloads_table.setColumnWidth(1, 180)  # Progress
-        self.downloads_table.setColumnWidth(2, 110)  # Size
-        self.downloads_table.setColumnWidth(3, 130)  # Speed
-        self.downloads_table.setColumnWidth(4, 120)  # Status
-        self.downloads_table.setColumnWidth(5, 160)  # Date
-        self.downloads_table.setColumnWidth(6, 60)   # ID
+        self.downloads_table.setColumnWidth(1, 160)  # Progress
+        self.downloads_table.setColumnWidth(2, 100)  # Size
+        self.downloads_table.setColumnWidth(3, 110)  # Speed
+        self.downloads_table.setColumnWidth(4, 100)  # Time Left
+        self.downloads_table.setColumnWidth(5, 100)  # Status
+        self.downloads_table.setColumnWidth(6, 140)  # Date
+        self.downloads_table.setColumnWidth(7, 60)   # ID
         
-        # Hide ID column (used internally)
-        self.downloads_table.setColumnHidden(6, True)
+        # Hide ID column
+        self.downloads_table.setColumnHidden(7, True)
         
         # Table settings
         self.downloads_table.setSelectionBehavior(QTableWidget.SelectRows)
@@ -212,9 +201,7 @@ class MainWindow(QMainWindow):
         self.downloads_table.setEditTriggers(QTableWidget.NoEditTriggers)
         self.downloads_table.setShowGrid(False)
         self.downloads_table.verticalHeader().setVisible(False)
-        
-        # Set row height
-        self.downloads_table.verticalHeader().setDefaultSectionSize(55)
+        self.downloads_table.verticalHeader().setDefaultSectionSize(50)
         
         # Context menu
         self.downloads_table.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -222,209 +209,178 @@ class MainWindow(QMainWindow):
     
     def create_status_bar(self):
         """
-        Create modern status bar.
+        Create simplified status bar.
         """
         status_bar = QStatusBar()
         status_bar.setObjectName("modernStatusBar")
         self.setStatusBar(status_bar)
         
-        # Container for status items
+        # Status container
         status_container = QWidget()
         status_layout = QHBoxLayout(status_container)
-        status_layout.setContentsMargins(15, 5, 15, 5)
-        status_layout.setSpacing(20)
+        status_layout.setContentsMargins(10, 3, 10, 3)
+        status_layout.setSpacing(15)
         
-        # Total speed label
-        speed_icon = QLabel("⚡")
-        speed_icon.setStyleSheet("font-size: 16px;")
-        self.speed_label = QLabel("0 B/s")
-        self.speed_label.setObjectName("speedLabel")
-        
-        speed_layout = QHBoxLayout()
-        speed_layout.setSpacing(5)
-        speed_layout.addWidget(speed_icon)
-        speed_layout.addWidget(self.speed_label)
+        # Speed label
+        self.speed_label = QLabel("Speed: 0 B/s")
+        self.speed_label.setObjectName("statusLabel")
         
         # Active downloads label
-        active_icon = QLabel("📥")
-        active_icon.setStyleSheet("font-size: 16px;")
-        self.active_label = QLabel("0 Active")
-        self.active_label.setObjectName("activeLabel")
+        self.active_label = QLabel("Active: 0")
+        self.active_label.setObjectName("statusLabel")
         
-        active_layout = QHBoxLayout()
-        active_layout.setSpacing(5)
-        active_layout.addWidget(active_icon)
-        active_layout.addWidget(self.active_label)
-        
-        status_layout.addLayout(speed_layout)
-        status_layout.addLayout(active_layout)
+        status_layout.addWidget(self.speed_label)
+        status_layout.addWidget(QLabel("|"))
+        status_layout.addWidget(self.active_label)
         status_layout.addStretch()
         
         status_bar.addPermanentWidget(status_container)
     
-    def apply_modern_theme(self):
+    def apply_simplified_theme(self):
         """
-        Apply modern dark theme with gradients and accents.
+        Apply simplified clean dark theme.
         """
         self.setStyleSheet("""
             /* Main Window */
             QMainWindow {
-                background-color: #1a1d29;
+                background-color: #1e1e2e;
             }
             
-            /* Header with Gradient */
+            /* Header */
             #header {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 #667eea, stop:1 #764ba2);
-                border: none;
+                background-color: #2a2a3e;
+                border-bottom: 2px solid #4a90e2;
             }
             
             #appTitle {
                 color: #ffffff;
-                letter-spacing: 2px;
-            }
-            
-            #appSubtitle {
-                color: rgba(255, 255, 255, 0.8);
             }
             
             /* Toolbar */
             QToolBar {
-                background-color: #252836;
+                background-color: #2a2a3e;
                 border: none;
-                border-bottom: 1px solid #2d3142;
-                padding: 8px;
-                spacing: 8px;
+                border-bottom: 1px solid #3a3a4e;
+                padding: 5px;
+                spacing: 5px;
             }
             
             QToolBar::separator {
-                background-color: #3d4159;
+                background-color: #3a3a4e;
                 width: 1px;
-                margin: 8px 10px;
+                margin: 5px 8px;
             }
             
             QToolBar QToolButton {
                 background-color: transparent;
-                color: #e2e8f0;
+                color: #e0e0e0;
                 border: none;
-                border-radius: 6px;
-                padding: 8px 16px;
+                border-radius: 4px;
+                padding: 6px 14px;
                 font-size: 13px;
-                font-weight: 500;
             }
             
             QToolBar QToolButton:hover {
-                background-color: rgba(102, 126, 234, 0.15);
-                color: #667eea;
+                background-color: #3a3a4e;
             }
             
             QToolBar QToolButton:pressed {
-                background-color: rgba(102, 126, 234, 0.25);
+                background-color: #4a4a5e;
             }
             
             QToolBar QToolButton#addButton {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 #667eea, stop:1 #764ba2);
+                background-color: #4a90e2;
                 color: #ffffff;
                 font-weight: 600;
             }
             
             QToolBar QToolButton#addButton:hover {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 #7c93f0, stop:1 #8b5cad);
+                background-color: #5aa0f2;
             }
             
             QToolBar QToolButton#settingsButton {
-                background-color: rgba(72, 187, 120, 0.15);
-                color: #48bb78;
-            }
-            
-            QToolBar QToolButton#settingsButton:hover {
-                background-color: rgba(72, 187, 120, 0.25);
+                background-color: #3a3a4e;
             }
             
             /* Table */
             #modernTable {
-                background-color: #252836;
+                background-color: #2a2a3e;
                 border: none;
-                border-radius: 0px;
-                gridline-color: transparent;
-                color: #e2e8f0;
+                color: #e0e0e0;
                 font-size: 13px;
             }
             
             #modernTable::item {
-                padding: 12px 8px;
+                padding: 10px 6px;
                 border: none;
             }
             
             #modernTable::item:selected {
-                background-color: rgba(102, 126, 234, 0.2);
-                color: #ffffff;
+                background-color: #3a4a5e;
             }
             
             #modernTable::item:hover {
-                background-color: rgba(102, 126, 234, 0.1);
+                background-color: #323244;
+            }
+            
+            #modernTable::item:alternate {
+                background-color: #262636;
             }
             
             QHeaderView::section {
-                background-color: #1a1d29;
-                color: #94a3b8;
-                padding: 12px 8px;
+                background-color: #1e1e2e;
+                color: #b0b0b0;
+                padding: 10px 6px;
                 border: none;
-                border-bottom: 2px solid #667eea;
+                border-bottom: 2px solid #4a90e2;
                 font-weight: 600;
                 font-size: 12px;
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
             }
             
             /* Progress Bar */
             QProgressBar {
-                border: none;
-                border-radius: 6px;
-                background-color: rgba(102, 126, 234, 0.1);
+                border: 1px solid #3a3a4e;
+                border-radius: 4px;
+                background-color: #1e1e2e;
                 text-align: center;
-                height: 24px;
-                color: #e2e8f0;
+                height: 20px;
+                color: #e0e0e0;
                 font-weight: 600;
                 font-size: 11px;
             }
             
             QProgressBar::chunk {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 #667eea, stop:1 #764ba2);
-                border-radius: 6px;
+                background-color: #4a90e2;
+                border-radius: 3px;
             }
             
             /* Status Bar */
             #modernStatusBar {
-                background-color: #1a1d29;
-                border-top: 1px solid #2d3142;
-                color: #e2e8f0;
+                background-color: #1e1e2e;
+                border-top: 1px solid #3a3a4e;
+                color: #e0e0e0;
             }
             
-            #speedLabel, #activeLabel {
-                color: #e2e8f0;
-                font-size: 13px;
-                font-weight: 600;
+            #statusLabel {
+                color: #b0b0b0;
+                font-size: 12px;
             }
             
             /* Scrollbar */
             QScrollBar:vertical {
-                background-color: #252836;
-                width: 12px;
+                background-color: #2a2a3e;
+                width: 10px;
                 border: none;
             }
             
             QScrollBar::handle:vertical {
-                background-color: #3d4159;
-                border-radius: 6px;
-                min-height: 30px;
+                background-color: #3a3a4e;
+                border-radius: 5px;
+                min-height: 25px;
             }
             
             QScrollBar::handle:vertical:hover {
-                background-color: #4a5069;
+                background-color: #4a4a5e;
             }
             
             QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
@@ -432,19 +388,19 @@ class MainWindow(QMainWindow):
             }
             
             QScrollBar:horizontal {
-                background-color: #252836;
-                height: 12px;
+                background-color: #2a2a3e;
+                height: 10px;
                 border: none;
             }
             
             QScrollBar::handle:horizontal {
-                background-color: #3d4159;
-                border-radius: 6px;
-                min-width: 30px;
+                background-color: #3a3a4e;
+                border-radius: 5px;
+                min-width: 25px;
             }
             
             QScrollBar::handle:horizontal:hover {
-                background-color: #4a5069;
+                background-color: #4a4a5e;
             }
             
             QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
@@ -453,63 +409,50 @@ class MainWindow(QMainWindow):
             
             /* Context Menu */
             QMenu {
-                background-color: #252836;
-                border: 1px solid #3d4159;
-                border-radius: 8px;
-                padding: 8px;
+                background-color: #2a2a3e;
+                border: 1px solid #3a3a4e;
+                border-radius: 6px;
+                padding: 5px;
             }
             
             QMenu::item {
-                color: #e2e8f0;
-                padding: 8px 30px 8px 12px;
-                border-radius: 4px;
+                color: #e0e0e0;
+                padding: 6px 25px 6px 10px;
+                border-radius: 3px;
             }
             
             QMenu::item:selected {
-                background-color: rgba(102, 126, 234, 0.2);
+                background-color: #3a4a5e;
             }
             
             QMenu::separator {
                 height: 1px;
-                background-color: #3d4159;
-                margin: 6px 8px;
+                background-color: #3a3a4e;
+                margin: 4px 6px;
             }
         """)
     
     def show_add_download_dialog(self):
-        """
-        Show add download dialog.
-        """
+        """Show add download dialog."""
         dialog = AddDownloadDialog(self, self.db_manager)
         if dialog.exec_():
             url, save_path = dialog.get_data()
             self.add_download(url, save_path)
     
     def show_settings_dialog(self):
-        """
-        Show settings dialog.
-        """
+        """Show settings dialog."""
         dialog = SettingsDialog(self, self.db_manager)
         if dialog.exec_():
-            # Reload settings
             max_concurrent = int(self.db_manager.get_setting('max_concurrent_downloads') or '3')
             self.download_manager.set_max_concurrent(max_concurrent)
             QMessageBox.information(self, "Settings", "Settings saved successfully!")
     
     def add_download(self, url: str, save_path: str):
-        """
-        Add a new download.
-        
-        Args:
-            url: Download URL
-            save_path: Directory to save file
-        """
+        """Add a new download."""
         try:
-            # Get filename from URL
             filename = get_filename_from_url(url)
             filepath = os.path.join(save_path, filename)
             
-            # Check if file exists
             if os.path.exists(filepath):
                 reply = QMessageBox.question(
                     self, "File Exists",
@@ -519,7 +462,7 @@ class MainWindow(QMainWindow):
                 if reply == QMessageBox.No:
                     return
             
-            # Get file size (optional)
+            # Get file size
             filesize = 0
             try:
                 response = requests.head(url, timeout=10)
@@ -531,9 +474,10 @@ class MainWindow(QMainWindow):
             # Add to database
             download_id = self.db_manager.add_download(url, filename, filepath, filesize)
             
-            # Add to download manager
+            # Add to download manager with optimized settings
             chunk_size = int(self.db_manager.get_setting('chunk_size') or '8192')
-            task = self.download_manager.add_download(download_id, url, filepath, chunk_size)
+            num_connections = int(self.db_manager.get_setting('num_connections') or '8')
+            task = self.download_manager.add_download(download_id, url, filepath, chunk_size, num_connections)
             
             # Connect signals
             task.progress_updated.connect(self.on_progress_updated)
@@ -550,16 +494,12 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(self, "Error", f"Failed to add download: {str(e)}")
     
     def add_download_to_table(self, download_id: int, filename: str, filesize: int, status: str):
-        """
-        Add download to table.
-        """
+        """Add download to table."""
         row = self.downloads_table.rowCount()
         self.downloads_table.insertRow(row)
         
         # Filename
-        filename_item = QTableWidgetItem(filename)
-        filename_item.setFont(QFont("Segoe UI", 11))
-        self.downloads_table.setItem(row, 0, filename_item)
+        self.downloads_table.setItem(row, 0, QTableWidgetItem(filename))
         
         # Progress bar
         progress_bar = QProgressBar()
@@ -569,29 +509,26 @@ class MainWindow(QMainWindow):
         
         # Size
         size_text = format_bytes(filesize) if filesize > 0 else "Unknown"
-        size_item = QTableWidgetItem(size_text)
-        self.downloads_table.setItem(row, 2, size_item)
+        self.downloads_table.setItem(row, 2, QTableWidgetItem(size_text))
         
         # Speed
-        speed_item = QTableWidgetItem("0 B/s")
-        self.downloads_table.setItem(row, 3, speed_item)
+        self.downloads_table.setItem(row, 3, QTableWidgetItem("0 B/s"))
+        
+        # Time Left
+        self.downloads_table.setItem(row, 4, QTableWidgetItem("--"))
         
         # Status
-        status_item = QTableWidgetItem(status.upper())
-        self.downloads_table.setItem(row, 4, status_item)
+        self.downloads_table.setItem(row, 5, QTableWidgetItem(status.upper()))
         
         # Date
         date_text = datetime.now().strftime("%Y-%m-%d %H:%M")
-        date_item = QTableWidgetItem(date_text)
-        self.downloads_table.setItem(row, 5, date_item)
+        self.downloads_table.setItem(row, 6, QTableWidgetItem(date_text))
         
         # ID (hidden)
-        self.downloads_table.setItem(row, 6, QTableWidgetItem(str(download_id)))
+        self.downloads_table.setItem(row, 7, QTableWidgetItem(str(download_id)))
     
     def load_downloads(self):
-        """
-        Load downloads from database.
-        """
+        """Load downloads from database."""
         downloads = self.db_manager.get_all_downloads()
         
         for download in downloads:
@@ -605,12 +542,9 @@ class MainWindow(QMainWindow):
             row = self.downloads_table.rowCount()
             self.downloads_table.insertRow(row)
             
-            # Filename
-            filename_item = QTableWidgetItem(filename)
-            filename_item.setFont(QFont("Segoe UI", 11))
-            self.downloads_table.setItem(row, 0, filename_item)
+            self.downloads_table.setItem(row, 0, QTableWidgetItem(filename))
             
-            # Progress bar
+            # Progress
             progress_bar = QProgressBar()
             progress_bar.setMaximum(100)
             if filesize > 0:
@@ -622,28 +556,29 @@ class MainWindow(QMainWindow):
             size_text = format_bytes(filesize) if filesize > 0 else "Unknown"
             self.downloads_table.setItem(row, 2, QTableWidgetItem(size_text))
             
-            # Speed
+            # Speed & Time
             self.downloads_table.setItem(row, 3, QTableWidgetItem("0 B/s"))
+            self.downloads_table.setItem(row, 4, QTableWidgetItem("--"))
             
             # Status
-            status_item = QTableWidgetItem(status.upper())
-            self.downloads_table.setItem(row, 4, status_item)
+            self.downloads_table.setItem(row, 5, QTableWidgetItem(status.upper()))
             
             # Date
             date_obj = datetime.fromisoformat(download['created_date'])
             date_text = date_obj.strftime("%Y-%m-%d %H:%M")
-            self.downloads_table.setItem(row, 5, QTableWidgetItem(date_text))
+            self.downloads_table.setItem(row, 6, QTableWidgetItem(date_text))
             
-            # ID (hidden)
-            self.downloads_table.setItem(row, 6, QTableWidgetItem(str(download_id)))
+            # ID
+            self.downloads_table.setItem(row, 7, QTableWidgetItem(str(download_id)))
             
             # Resume incomplete downloads
             if status in ['downloading', 'paused', 'pending']:
                 url = download['url']
                 filepath = download['filepath']
                 chunk_size = int(self.db_manager.get_setting('chunk_size') or '8192')
+                num_connections = int(self.db_manager.get_setting('num_connections') or '8')
                 
-                task = self.download_manager.add_download(download_id, url, filepath, chunk_size)
+                task = self.download_manager.add_download(download_id, url, filepath, chunk_size, num_connections)
                 task.progress_updated.connect(self.on_progress_updated)
                 task.status_changed.connect(self.on_status_changed)
                 task.download_completed.connect(self.on_download_completed)
@@ -653,14 +588,12 @@ class MainWindow(QMainWindow):
                     task.pause()
     
     def update_table(self):
-        """
-        Update table with current download info.
-        """
+        """Update table with current download info."""
         total_speed = 0.0
         active_count = 0
         
         for row in range(self.downloads_table.rowCount()):
-            download_id_item = self.downloads_table.item(row, 6)
+            download_id_item = self.downloads_table.item(row, 7)
             if not download_id_item:
                 continue
             
@@ -681,23 +614,31 @@ class MainWindow(QMainWindow):
                 if download_data:
                     speed = download_data['speed']
                     total_speed += speed
+                    
+                    # Calculate and display time left
+                    if speed > 0 and task.total_bytes > 0:
+                        eta = calculate_eta(task.downloaded_bytes, task.total_bytes, speed)
+                        time_item = self.downloads_table.item(row, 4)
+                        if time_item:
+                            time_item.setText(eta)
+            else:
+                # Clear time left for non-active downloads
+                time_item = self.downloads_table.item(row, 4)
+                if time_item:
+                    time_item.setText("--")
         
         # Update status bar
-        self.speed_label.setText(format_speed(total_speed))
-        self.active_label.setText(f"{active_count} Active")
+        self.speed_label.setText(f"Speed: {format_speed(total_speed)}")
+        self.active_label.setText(f"Active: {active_count}")
     
     @pyqtSlot(int, int, float)
     def on_progress_updated(self, download_id: int, downloaded: int, speed: float):
-        """
-        Handle progress update signal.
-        """
+        """Handle progress update signal."""
         self.db_manager.update_download_progress(download_id, downloaded, speed)
         
-        # Find row
         for row in range(self.downloads_table.rowCount()):
-            id_item = self.downloads_table.item(row, 6)
+            id_item = self.downloads_table.item(row, 7)
             if id_item and int(id_item.text()) == download_id:
-                # Update speed
                 speed_item = self.downloads_table.item(row, 3)
                 if speed_item:
                     speed_item.setText(format_speed(speed))
@@ -705,30 +646,24 @@ class MainWindow(QMainWindow):
     
     @pyqtSlot(int, str)
     def on_status_changed(self, download_id: int, status: str):
-        """
-        Handle status change signal.
-        """
+        """Handle status change signal."""
         self.db_manager.update_download_status(download_id, status)
         
-        # Find row and update status
         for row in range(self.downloads_table.rowCount()):
-            id_item = self.downloads_table.item(row, 6)
+            id_item = self.downloads_table.item(row, 7)
             if id_item and int(id_item.text()) == download_id:
-                status_item = self.downloads_table.item(row, 4)
+                status_item = self.downloads_table.item(row, 5)
                 if status_item:
                     status_item.setText(status.upper())
                 break
     
     @pyqtSlot(int)
     def on_download_completed(self, download_id: int):
-        """
-        Handle download completion signal.
-        """
+        """Handle download completion signal."""
         download = self.db_manager.get_download(download_id)
         if download:
             filename = download['filename']
             
-            # Show notification if enabled
             if self.db_manager.get_setting('enable_notifications') == 'true':
                 QMessageBox.information(
                     self, "Download Complete",
@@ -739,9 +674,7 @@ class MainWindow(QMainWindow):
     
     @pyqtSlot(int, str)
     def on_download_failed(self, download_id: int, error: str):
-        """
-        Handle download failure signal.
-        """
+        """Handle download failure signal."""
         download = self.db_manager.get_download(download_id)
         if download:
             filename = download['filename']
@@ -751,36 +684,56 @@ class MainWindow(QMainWindow):
             )
     
     def pause_selected(self):
-        """
-        Pause selected download.
-        """
+        """Pause selected download."""
         row = self.downloads_table.currentRow()
         if row < 0:
+            QMessageBox.information(self, "No Selection", "Please select a download to pause.")
             return
         
-        download_id = int(self.downloads_table.item(row, 6).text())
-        self.download_manager.pause_download(download_id)
+        download_id = int(self.downloads_table.item(row, 7).text())
+        status_item = self.downloads_table.item(row, 5)
+        
+        if status_item:
+            current_status = status_item.text().lower()
+            if current_status == 'downloading' or current_status == 'pending':
+                self.download_manager.pause_download(download_id)
+                self.statusBar().showMessage(f"Download paused")
+            else:
+                QMessageBox.information(self, "Cannot Pause", f"Cannot pause a download with status: {current_status}")
     
     def resume_selected(self):
-        """
-        Resume selected download.
-        """
+        """Resume selected download."""
         row = self.downloads_table.currentRow()
         if row < 0:
+            QMessageBox.information(self, "No Selection", "Please select a download to resume.")
             return
         
-        download_id = int(self.downloads_table.item(row, 6).text())
-        self.download_manager.resume_download(download_id)
+        download_id = int(self.downloads_table.item(row, 7).text())
+        status_item = self.downloads_table.item(row, 5)
+        
+        if status_item:
+            current_status = status_item.text().lower()
+            if current_status == 'paused' or current_status == 'failed':
+                self.download_manager.resume_download(download_id)
+                self.statusBar().showMessage(f"Download resumed")
+            else:
+                QMessageBox.information(self, "Cannot Resume", f"Cannot resume a download with status: {current_status}")
     
     def cancel_selected(self):
-        """
-        Cancel selected download.
-        """
+        """Cancel selected download."""
         row = self.downloads_table.currentRow()
         if row < 0:
+            QMessageBox.information(self, "No Selection", "Please select a download to cancel.")
             return
         
-        download_id = int(self.downloads_table.item(row, 6).text())
+        download_id = int(self.downloads_table.item(row, 7).text())
+        status_item = self.downloads_table.item(row, 5)
+        
+        if status_item:
+            current_status = status_item.text().lower()
+            if current_status in ['completed', 'cancelled']:
+                QMessageBox.information(self, "Cannot Cancel", f"Download is already {current_status}.")
+                return
         
         reply = QMessageBox.question(
             self, "Cancel Download",
@@ -790,16 +743,15 @@ class MainWindow(QMainWindow):
         
         if reply == QMessageBox.Yes:
             self.download_manager.cancel_download(download_id)
+            self.statusBar().showMessage(f"Download cancelled")
     
     def remove_selected(self):
-        """
-        Remove selected download from list.
-        """
+        """Remove selected download from list."""
         row = self.downloads_table.currentRow()
         if row < 0:
             return
         
-        download_id = int(self.downloads_table.item(row, 6).text())
+        download_id = int(self.downloads_table.item(row, 7).text())
         
         reply = QMessageBox.question(
             self, "Remove Download",
@@ -808,24 +760,17 @@ class MainWindow(QMainWindow):
         )
         
         if reply == QMessageBox.Yes:
-            # Cancel if active
             self.download_manager.cancel_download(download_id)
-            
-            # Remove from database
             self.db_manager.delete_download(download_id)
-            
-            # Remove from table
             self.downloads_table.removeRow(row)
     
     def open_download_folder(self):
-        """
-        Open download folder of selected item.
-        """
+        """Open download folder of selected item."""
         row = self.downloads_table.currentRow()
         if row < 0:
             return
         
-        download_id = int(self.downloads_table.item(row, 6).text())
+        download_id = int(self.downloads_table.item(row, 7).text())
         download = self.db_manager.get_download(download_id)
         
         if download:
@@ -834,17 +779,15 @@ class MainWindow(QMainWindow):
                 os.startfile(folder) if os.name == 'nt' else os.system(f'xdg-open "{folder}"')
     
     def show_context_menu(self, position):
-        """
-        Show context menu for table.
-        """
+        """Show context menu for table."""
         menu = QMenu()
         
-        pause_action = menu.addAction("⏸  Pause")
-        resume_action = menu.addAction("▶  Resume")
-        cancel_action = menu.addAction("⏹  Cancel")
+        pause_action = menu.addAction("Pause")
+        resume_action = menu.addAction("Resume")
+        cancel_action = menu.addAction("Cancel")
         menu.addSeparator()
-        remove_action = menu.addAction("🗑  Remove")
-        folder_action = menu.addAction("📁  Open Folder")
+        remove_action = menu.addAction("Remove")
+        folder_action = menu.addAction("Open Folder")
         
         action = menu.exec_(self.downloads_table.viewport().mapToGlobal(position))
         
@@ -860,10 +803,7 @@ class MainWindow(QMainWindow):
             self.open_download_folder()
     
     def closeEvent(self, event):
-        """
-        Handle window close event.
-        """
-        # Ask for confirmation if there are active downloads
+        """Handle window close event."""
         active_count = sum(
             1 for task in self.download_manager.active_downloads.values()
             if task.thread and task.thread.is_alive() and not task.is_paused
@@ -880,6 +820,5 @@ class MainWindow(QMainWindow):
                 event.ignore()
                 return
         
-        # Close database connection
         self.db_manager.close()
         event.accept()

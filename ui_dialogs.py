@@ -1,3 +1,5 @@
+# ui_dialogs.py
+
 """
 NexusDown - Modern UI Dialogs
 ==============================
@@ -128,82 +130,75 @@ class AddDownloadDialog(QDialog):
         """
         self.setStyleSheet("""
             QDialog {
-                background-color: #1a1d29;
+                background-color: #1e1e2e;
             }
             
             #dialogTitle {
-                color: #e2e8f0;
+                color: #e0e0e0;
                 margin-bottom: 10px;
             }
             
             #fieldLabel {
-                color: #94a3b8;
+                color: #b0b0b0;
                 font-size: 13px;
                 font-weight: 600;
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
             }
             
             #modernInput {
-                background-color: #252836;
-                border: 2px solid #3d4159;
-                border-radius: 8px;
+                background-color: #2a2a3e;
+                border: 2px solid #3a3a4e;
+                border-radius: 6px;
                 padding: 10px 14px;
-                color: #e2e8f0;
+                color: #e0e0e0;
                 font-size: 14px;
             }
             
             #modernInput:focus {
-                border: 2px solid #667eea;
-                background-color: #2a2f42;
+                border: 2px solid #4a90e2;
             }
             
             #browseButton {
-                background-color: #252836;
-                border: 2px solid #3d4159;
-                border-radius: 8px;
-                color: #e2e8f0;
+                background-color: #2a2a3e;
+                border: 2px solid #3a3a4e;
+                border-radius: 6px;
+                color: #e0e0e0;
                 font-size: 13px;
                 font-weight: 600;
             }
             
             #browseButton:hover {
-                background-color: #2d3142;
-                border-color: #667eea;
+                background-color: #3a3a4e;
+                border-color: #4a90e2;
             }
             
             #primaryButton {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 #667eea, stop:1 #764ba2);
+                background-color: #4a90e2;
                 border: none;
-                border-radius: 8px;
+                border-radius: 6px;
                 color: #ffffff;
                 font-size: 14px;
                 font-weight: 600;
             }
             
             #primaryButton:hover {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 #7c93f0, stop:1 #8b5cad);
+                background-color: #5aa0f2;
             }
             
             #primaryButton:pressed {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 #5a6cd8, stop:1 #6a4291);
+                background-color: #3a80d2;
             }
             
             #cancelButton {
-                background-color: #252836;
-                border: 2px solid #3d4159;
-                border-radius: 8px;
-                color: #e2e8f0;
+                background-color: #2a2a3e;
+                border: 2px solid #3a3a4e;
+                border-radius: 6px;
+                color: #e0e0e0;
                 font-size: 14px;
                 font-weight: 600;
             }
             
             #cancelButton:hover {
-                background-color: #2d3142;
-                border-color: #4a5069;
+                background-color: #3a3a4e;
             }
         """)
     
@@ -276,7 +271,7 @@ class SettingsDialog(QDialog):
         self.setWindowTitle("Settings")
         self.setModal(True)
         self.setMinimumWidth(600)
-        self.setMinimumHeight(500)
+        self.setMinimumHeight(550)
         
         layout = QVBoxLayout(self)
         layout.setContentsMargins(25, 25, 25, 25)
@@ -305,6 +300,23 @@ class SettingsDialog(QDialog):
         self.max_concurrent_spin.setMinimumHeight(40)
         download_layout.addRow("Max Concurrent Downloads:", self.max_concurrent_spin)
         
+        # Number of connections per download (NEW)
+        self.num_connections_spin = QSpinBox()
+        self.num_connections_spin.setObjectName("modernSpinBox")
+        self.num_connections_spin.setMinimum(1)
+        self.num_connections_spin.setMaximum(16)
+        self.num_connections_spin.setValue(8)
+        self.num_connections_spin.setMinimumHeight(40)
+        self.num_connections_spin.setToolTip("More connections = faster downloads (recommended: 4-8)\nNote: HTTPS downloads automatically use fewer connections to avoid SSL errors")
+        download_layout.addRow("Connections Per Download:", self.num_connections_spin)
+        
+        # Force single connection for large HTTPS files (NEW)
+        self.force_single_https_check = QCheckBox("Use single connection for large HTTPS files")
+        self.force_single_https_check.setObjectName("modernCheckBox")
+        self.force_single_https_check.setChecked(True)
+        self.force_single_https_check.setToolTip("Prevents SSL errors when downloading large HTTPS files (>500MB)")
+        download_layout.addRow("", self.force_single_https_check)
+        
         # Default download folder
         folder_layout = QHBoxLayout()
         folder_layout.setSpacing(10)
@@ -323,7 +335,7 @@ class SettingsDialog(QDialog):
         # Chunk size
         self.chunk_size_combo = QComboBox()
         self.chunk_size_combo.setObjectName("modernComboBox")
-        self.chunk_size_combo.addItems(["4 KB", "8 KB", "16 KB", "32 KB", "64 KB"])
+        self.chunk_size_combo.addItems(["4 KB", "8 KB (Default)", "16 KB", "32 KB", "64 KB"])
         self.chunk_size_combo.setCurrentIndex(1)  # 8 KB default
         self.chunk_size_combo.setMinimumHeight(40)
         download_layout.addRow("Download Chunk Size:", self.chunk_size_combo)
@@ -343,22 +355,6 @@ class SettingsDialog(QDialog):
         notification_layout.addWidget(self.enable_notifications_check)
         
         layout.addWidget(notification_group)
-        
-        # Theme Settings Group
-        theme_group = QGroupBox("Appearance")
-        theme_group.setObjectName("modernGroup")
-        theme_layout = QFormLayout(theme_group)
-        theme_layout.setSpacing(15)
-        theme_layout.setContentsMargins(20, 25, 20, 20)
-        
-        # Theme selector
-        self.theme_combo = QComboBox()
-        self.theme_combo.setObjectName("modernComboBox")
-        self.theme_combo.addItems(["Dark (Default)", "Light (Coming Soon)"])
-        self.theme_combo.setMinimumHeight(40)
-        theme_layout.addRow("Theme:", self.theme_combo)
-        
-        layout.addWidget(theme_group)
         
         layout.addStretch()
         
@@ -393,20 +389,20 @@ class SettingsDialog(QDialog):
         """
         self.setStyleSheet("""
             QDialog {
-                background-color: #1a1d29;
+                background-color: #1e1e2e;
             }
             
             #dialogTitle {
-                color: #e2e8f0;
+                color: #e0e0e0;
                 margin-bottom: 10px;
             }
             
             #modernGroup {
-                background-color: #252836;
-                border: 2px solid #3d4159;
-                border-radius: 12px;
+                background-color: #2a2a3e;
+                border: 2px solid #3a3a4e;
+                border-radius: 8px;
                 font-weight: 600;
-                color: #e2e8f0;
+                color: #e0e0e0;
                 margin-top: 10px;
                 padding-top: 10px;
             }
@@ -415,61 +411,61 @@ class SettingsDialog(QDialog):
                 subcontrol-origin: margin;
                 left: 15px;
                 padding: 0 8px;
-                color: #667eea;
+                color: #4a90e2;
             }
             
             QLabel {
-                color: #94a3b8;
+                color: #b0b0b0;
                 font-size: 13px;
             }
             
             #modernInput {
-                background-color: #1a1d29;
-                border: 2px solid #3d4159;
-                border-radius: 8px;
+                background-color: #1e1e2e;
+                border: 2px solid #3a3a4e;
+                border-radius: 6px;
                 padding: 10px 14px;
-                color: #e2e8f0;
+                color: #e0e0e0;
                 font-size: 13px;
             }
             
             #modernInput:focus {
-                border: 2px solid #667eea;
+                border: 2px solid #4a90e2;
             }
             
             #modernSpinBox {
-                background-color: #1a1d29;
-                border: 2px solid #3d4159;
-                border-radius: 8px;
+                background-color: #1e1e2e;
+                border: 2px solid #3a3a4e;
+                border-radius: 6px;
                 padding: 10px 14px;
-                color: #e2e8f0;
+                color: #e0e0e0;
                 font-size: 13px;
             }
             
             #modernSpinBox:focus {
-                border: 2px solid #667eea;
+                border: 2px solid #4a90e2;
             }
             
             #modernSpinBox::up-button, #modernSpinBox::down-button {
-                background-color: #3d4159;
+                background-color: #3a3a4e;
                 border: none;
                 width: 20px;
             }
             
             #modernSpinBox::up-button:hover, #modernSpinBox::down-button:hover {
-                background-color: #667eea;
+                background-color: #4a90e2;
             }
             
             #modernComboBox {
-                background-color: #1a1d29;
-                border: 2px solid #3d4159;
-                border-radius: 8px;
+                background-color: #1e1e2e;
+                border: 2px solid #3a3a4e;
+                border-radius: 6px;
                 padding: 10px 14px;
-                color: #e2e8f0;
+                color: #e0e0e0;
                 font-size: 13px;
             }
             
             #modernComboBox:focus {
-                border: 2px solid #667eea;
+                border: 2px solid #4a90e2;
             }
             
             #modernComboBox::drop-down {
@@ -478,14 +474,14 @@ class SettingsDialog(QDialog):
             }
             
             #modernComboBox QAbstractItemView {
-                background-color: #252836;
-                border: 2px solid #3d4159;
-                selection-background-color: rgba(102, 126, 234, 0.3);
-                color: #e2e8f0;
+                background-color: #2a2a3e;
+                border: 2px solid #3a3a4e;
+                selection-background-color: #4a90e2;
+                color: #e0e0e0;
             }
             
             #modernCheckBox {
-                color: #e2e8f0;
+                color: #e0e0e0;
                 font-size: 13px;
                 spacing: 8px;
             }
@@ -493,58 +489,54 @@ class SettingsDialog(QDialog):
             #modernCheckBox::indicator {
                 width: 20px;
                 height: 20px;
-                border: 2px solid #3d4159;
+                border: 2px solid #3a3a4e;
                 border-radius: 4px;
-                background-color: #1a1d29;
+                background-color: #1e1e2e;
             }
             
             #modernCheckBox::indicator:checked {
-                background-color: #667eea;
-                border-color: #667eea;
-                image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEzLjMzMzMgNEw2IDExLjMzMzNMMi42NjY2NyA4IiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgo8L3N2Zz4K);
+                background-color: #4a90e2;
+                border-color: #4a90e2;
             }
             
             #browseButton {
-                background-color: #1a1d29;
-                border: 2px solid #3d4159;
-                border-radius: 8px;
-                color: #e2e8f0;
+                background-color: #1e1e2e;
+                border: 2px solid #3a3a4e;
+                border-radius: 6px;
+                color: #e0e0e0;
                 font-size: 13px;
                 font-weight: 600;
             }
             
             #browseButton:hover {
-                background-color: #252836;
-                border-color: #667eea;
+                background-color: #2a2a3e;
+                border-color: #4a90e2;
             }
             
             #primaryButton {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 #667eea, stop:1 #764ba2);
+                background-color: #4a90e2;
                 border: none;
-                border-radius: 8px;
+                border-radius: 6px;
                 color: #ffffff;
                 font-size: 14px;
                 font-weight: 600;
             }
             
             #primaryButton:hover {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 #7c93f0, stop:1 #8b5cad);
+                background-color: #5aa0f2;
             }
             
             #cancelButton {
-                background-color: #252836;
-                border: 2px solid #3d4159;
-                border-radius: 8px;
-                color: #e2e8f0;
+                background-color: #2a2a3e;
+                border: 2px solid #3a3a4e;
+                border-radius: 6px;
+                color: #e0e0e0;
                 font-size: 14px;
                 font-weight: 600;
             }
             
             #cancelButton:hover {
-                background-color: #2d3142;
-                border-color: #4a5069;
+                background-color: #3a3a4e;
             }
         """)
     
@@ -569,6 +561,14 @@ class SettingsDialog(QDialog):
         max_concurrent = int(self.db_manager.get_setting('max_concurrent_downloads') or '3')
         self.max_concurrent_spin.setValue(max_concurrent)
         
+        # Number of connections
+        num_connections = int(self.db_manager.get_setting('num_connections') or '8')
+        self.num_connections_spin.setValue(num_connections)
+        
+        # Force single connection for HTTPS
+        force_single = self.db_manager.get_setting('force_single_https')
+        self.force_single_https_check.setChecked(force_single != 'false')  # Default to True
+        
         # Default folder
         default_folder = self.db_manager.get_setting('default_download_folder')
         if default_folder:
@@ -582,9 +582,6 @@ class SettingsDialog(QDialog):
         # Notifications
         enable_notifications = self.db_manager.get_setting('enable_notifications') == 'true'
         self.enable_notifications_check.setChecked(enable_notifications)
-        
-        # Theme (always dark for now)
-        self.theme_combo.setCurrentIndex(0)
     
     def save_settings(self):
         """
@@ -598,6 +595,8 @@ class SettingsDialog(QDialog):
         
         # Save settings
         self.db_manager.set_setting('max_concurrent_downloads', str(self.max_concurrent_spin.value()))
+        self.db_manager.set_setting('num_connections', str(self.num_connections_spin.value()))
+        self.db_manager.set_setting('force_single_https', 'true' if self.force_single_https_check.isChecked() else 'false')
         self.db_manager.set_setting('default_download_folder', folder)
         
         # Chunk size
@@ -608,8 +607,5 @@ class SettingsDialog(QDialog):
         # Notifications
         enable_notifications = 'true' if self.enable_notifications_check.isChecked() else 'false'
         self.db_manager.set_setting('enable_notifications', enable_notifications)
-        
-        # Theme
-        self.db_manager.set_setting('theme', 'dark')
         
         self.accept()

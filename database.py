@@ -1,3 +1,5 @@
+# database.py
+
 """
 Database Manager Module
 =======================
@@ -72,9 +74,11 @@ class DatabaseManager:
         default_settings = {
             'max_concurrent_downloads': '3',
             'default_download_folder': os.path.join(os.path.expanduser('~'), 'Downloads'),
-            'theme': 'light',
+            'theme': 'dark',
             'enable_notifications': 'true',
-            'chunk_size': '8192'
+            'chunk_size': '8192',
+            'num_connections': '8',  # Number of parallel connections for speed
+            'force_single_https': 'true'  # Force single connection for large HTTPS files to avoid SSL errors
         }
         
         for key, value in default_settings.items():

@@ -3,20 +3,29 @@ __pycache__/
 *.py[cod]
 *$py.class
 *.so
+*.pyo
+*.pyd
 
 # Database files
 *.db
+*.db-journal
+*.db-wal
+*.db-shm
 idm_database.db
 
 # Temporary download files
 *.idmtemp
 *.part*
+*.part[0-9]*
+*.download
+*.tmp
 
 # Virtual environment
 venv/
 env/
 ENV/
 .venv
+venv.bak/
 
 # IDE files
 .vscode/
@@ -24,28 +33,129 @@ ENV/
 *.swp
 *.swo
 *~
+.project
+.pydevproject
+.settings/
 
 # OS files
 .DS_Store
 Thumbs.db
 desktop.ini
+ehthumbs.db
+$RECYCLE.BIN/
 
 # Distribution / packaging
 *.egg-info/
 dist/
 build/
+*.egg
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.whl
 
 # PyInstaller
 *.spec
+*.manifest
+
+# Inno Setup
+installer_output/
+Output/
 
 # Unit test / coverage reports
 htmlcov/
 .tox/
 .coverage
+.coverage.*
 .pytest_cache/
+.cache
+nosetests.xml
+coverage.xml
+*.cover
 
 # Logs
 *.log
+logs/
+*.log.*
+
+# Icon temporary files
+icon_temp.png
+temp_icon_*.png
+
+# Windows installer files
+*.exe
+!dist/NexusDown.exe
+*.msi
+*.msm
+*.msp
+
+# Compiled binaries
+*.dll
+*.so
+*.dylib
+
+# Documentation builds
+docs/_build/
+site/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# PEP 582
+__pypackages__/
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.env.local
+.env.*.local
+pip-log.txt
+pip-delete-this-directory.txt
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
 
 # Downloaded files (optional - uncomment if you don't want to track downloads)
 # Downloads/
+# downloads/
+
+# Application-specific
+# Uncomment these if you don't want to track them:
+# icon.ico
+# LICENSE.txt
+# version_info.txt
+# installer.iss

@@ -484,6 +484,9 @@ class MainWindow(QMainWindow):
             task.status_changed.connect(self.on_status_changed)
             task.download_completed.connect(self.on_download_completed)
             task.download_failed.connect(self.on_download_failed)
+
+            # In add_download method, after other signal connections, add:
+            task.retry_attempt.connect(self.on_retry_attempt)
             
             # Add to table
             self.add_download_to_table(download_id, filename, filesize, "pending")
@@ -583,6 +586,8 @@ class MainWindow(QMainWindow):
                 task.status_changed.connect(self.on_status_changed)
                 task.download_completed.connect(self.on_download_completed)
                 task.download_failed.connect(self.on_download_failed)
+                # In load_downloads method, after other signal connections, add:
+                task.retry_attempt.connect(self.on_retry_attempt)
                 
                 if status == 'paused':
                     task.pause()
@@ -682,6 +687,27 @@ class MainWindow(QMainWindow):
                 self, "Download Failed",
                 f"Download failed: {filename}\nError: {error}"
             )
+    
+    # Add this to ui_mainwindow.py in the MainWindow class
+
+    @pyqtSlot(int, int, int)
+    def on_retry_attempt(self, download_id: int, attempt: int, max_attempts: int):
+        """Handle retry attempt signal."""
+        for row in range(self.downloads_table.rowCount()):
+            id_item = self.downloads_table.item(row, 7)
+            if id_item and int(id_item.text()) == download_id:
+                status_item = self.downloads_table.item(row, 5)
+                if status_item:
+                    status_item.setText(f"RETRY {attempt}/{max_attempts}")
+                
+                # Show message in status bar
+                download = self.db_manager.get_download(download_id)
+                if download:
+                    filename = download['filename']
+                    self.statusBar().showMessage(
+                        f"⟳ Retrying {filename} (attempt {attempt}/{max_attempts})..."
+                    )
+                break
     
     def pause_selected(self):
         """Pause selected download."""
